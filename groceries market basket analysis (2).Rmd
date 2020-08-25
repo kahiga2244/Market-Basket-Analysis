@@ -1,0 +1,353 @@
+---
+title: "Association Analysis"
+output:
+  pdf_document: default
+  pdf: default
+---
+
+# PROJECT WEEK
+
+##DEFINING THE ANALYTIC QUESTION QUESTION
+
+
+###a). Specifying the analytic question
+
+As Data Scientists, we have been tasked by a client with building a model that understands their customer’s behavior by uncovering associations between grocery items they bought Previously. More specifically, they would like to learn the characteristics of there clients will help them in arranging products in there stores.
+
+
+###b). Defining the metrics of success
+
+Our success will be determined by building a model with the best confidence, support and lift values between related items.
+
+
+###c) Understanding the Context
+
+Our client has tasked as with an association analysis problem, which is a data mining function that discovers the probability of the co-occurrence of items in a collection. The relationships between co-occurring items are expressed as association rules.
+
+The association rules are if-then statements that help to show the probability of relationships between data items within large data sets in various types of databases. Association rule mining has a number of applications and is widely used to help discover sales correlations in transactional data.
+
+
+###d). Recording the Experimental Design
+
+Below is the expected workflow of our Analysis
+
+1.   Data Cleaning and Preparation
+
+*   Load libraries and dataset
+*   Deal with missing values
+  
+2.   Perform EDA
+
+3.  Analysis  
+
+*   Building rules
+*   Provide a description of the rules
+
+4.  Check items bought before most frequently bought items are bought.
+5.  Check items after before most frequently bought items are bought.
+6.  Make conclusions & Challenge the solution
+
+
+###e) Data relevance/ Appropriateness of Data
+
+This a the groceries data with the list of items bought by customers. From the left side is the number of items in a basket then Item 1, 2, 3, etc stands for list of the item. 
+
+Below is the link to the dataset
+
+https://www.kaggle.com/irfanasrullah/groceries
+
+## Importing Libraries
+
+```{r}
+# We first we install the required arules library 
+#
+install.packages("arules")
+# Loading the arules library
+#
+library(arules)
+```
+
+
+## Load the Dataset
+
+```{r}
+#load the dataset as transactions
+
+path <- "groceries.csv"
+
+groceries<- read.transactions(path, sep = ",")
+groceries
+```
+
+
+## Checking the data
+
+```{r}
+head(groceries)
+
+```
+
+```{r}
+str(groceries)
+
+```
+
+```{r}
+#dimensions of the records
+dim(groceries)
+
+```
+* there were 9735 transactions
+* there were 169 unique items bought from the store
+
+
+
+```{r}
+#preview the first five groceries transactions
+inspect(groceries[1:5])
+
+```
+```{r}
+summary(groceries)
+
+```
+### Interpretation
+
+most frequently bought items include:
+* whole milk
+* vegetables
+* rolls/buns
+* soda
+* yoghurt
+
+
+* 2513 out of  9835 transaction had milk as one of the items in the set
+
+* The largest item set bought by a customer include 32 items
+
+* 2159 transaction that were made were of 1 item set
+
+
+## External Data Source Validation
+
+Making sure your data matches something outside of the dataset is very important. It allows you to ensure that the measurements are roughly in line with what they should be and it serves as a check on what other things might be wrong in your dataset. External validation can often be as simple as checking your data against a single number, as we will do here.
+
+
+
+## Explanatory data analysis
+
+```{r}
+par(mfrow = c(1, 2))
+
+# plot the frequency of items
+itemFrequencyPlot(groceries, topN = 10,col="orange")
+
+# Displaying top 10 most common items in the transactions dataset 
+# and the items whose relative importance is at least 10%
+itemFrequencyPlot(groceries, support = 0.1,col="purple")
+```
+the  only item that had a support of above 20% was whole milk alone
+
+
+
+##Implimenting the Solution
+
+ASSOCIATION RULES.
+
+```{r}
+#Rule1: supp:0.00199, conf:0.47
+rule1 <- apriori(groceries, parameter=list(supp=0.00199, conf=0.47, maxlen=3))
+rule1
+```
+
+```{r}
+#Rule2: supp:0.003, conf:0.35
+rule2 <- apriori(groceries, parameter=list(supp=0.003, conf=0.35, maxlen=2))
+rule2
+```
+
+```{r}
+#Rule3: supp:0.003, conf:0.38
+rule3 <- apriori(groceries, parameter=list(supp=0.003, conf=0.38, maxlen=3))
+rule3
+```
+
+```{r}
+#Rule4: supp = 0.002, conf = 0.40
+rule4 <- apriori(groceries,parameter = list(supp = 0.002, conf = 0.40))
+rule4
+```
+
+```{r}
+#Rule5: supp = 0.002, conf = 0.40
+rule5 <- apriori(groceries,parameter = list(supp = 0.0009, conf = 0.30, maxlen=2))
+rule5
+
+```
+
+```{r}
+#Rule6: supp = 0.005, conf=0.3
+rules6 <- apriori(groceries, parameter = list(support =0.005, confidence = 0.3,maxlen=2, minlen = 2))
+rules6
+```
+```{r}
+#rule7: supp 0.005, confidence= 0.45
+rules7 <- apriori(groceries, parameter = list(support =0.005, confidence = 0.45,maxlen=2, minlen = 2))
+rules7
+
+```
+
+```{r}
+# Observing rules built in our model i.e. first 5 model rules
+
+inspect(rules7[1:3])
+
+```
+
+```{r}
+#Ordering these rules by lift then looking at the first five rules.
+
+inspect(sort(rules7, by = "lift", decreasing=TRUE)[1:5])
+
+```
+Lift:This says how likely item Y is purchased when item X is purchased, while controlling for how popular item Y is.
+
+{herbs}	=>	{other vegetables} is the item set with the highest lift value hence meaning that it is 2.454874	more likely item that herbs are purchased when item other vegetables are purchased, while controlling for how popular herbs are.
+
+
+
+```{r}
+#Ordering these rules by confidence then looking at the first five rules.
+
+inspect(sort(rules7, by = "confidence", decreasing=TRUE)[1:5])
+
+```
+Confidence: This says how likely item Y is purchased when item X is purchased, expressed as {X -> Y}. This is measured by the proportion of transactions with item X, in which item Y also appears.
+
+{baking powder}	=>	{whole milk} is the transaction with the highest Confidence, meaning that it is 52% likely to purchase whole milk after purchasing baking powder.
+
+
+
+```{r}
+install.packages("arulesViz")
+
+library(arulesViz)
+
+```
+
+
+```{r}
+#Ordering these rules by confidence then looking at the first five rules.
+
+inspect(sort(rules7, by = "support", decreasing=TRUE)[1:5])
+
+```
+
+
+
+```{r}
+
+options(repr.plot.width=10,repr.plot.height=8)
+itemFrequencyPlot(groceries, support = .1,col="lightblue",xlab="Item name", 
+                  ylab="Frequency (relative)", main="Item frequency plot with 5% support")
+
+```
+
+This says how popular an itemset is, as measured by the proportion of transactions in which an itemset appears.
+
+{domestic eggs}	=>	{whole milk} has the highest support value, meaning that it is the most popular itemset among the transactions with whole milk being the most popular item.
+
+
+```{r}
+#visualizing the rules
+
+plot(rules7)
+
+```
+
+
+
+```{r}
+
+plot(rules7,method="grouped")
+
+```
+
+This graph shows items present in our rules.
+
+
+```{r}
+
+plot(rules7,method="graph")
+
+```
+
+This graph shows relationship between items in our rules,interms of lift values and their support values with whole milk being the most popular item.
+
+
+```{r}
+
+plot(rules7, method="graph", control=list(layout=igraph::in_circle()))
+
+```
+
+This graph shows relationship between items in our rules,interms of lift values and their support values with whole milk being the most popular item.
+
+
+```{r}
+#whole milk is bought what are the other products that customer will buy
+
+rules<-apriori(data=groceries, parameter=list(supp=0.005,conf = 0.15,minlen=2), appearance = list(default="rhs",lhs="whole milk"),
+               control = list(verbose=F))
+rules<-sort(rules, decreasing=TRUE,by="confidence")
+inspect(rules[1:5])
+
+```
+
+```{r}
+
+# buying whole milk when other products are bought
+
+rules<-apriori(data=groceries, parameter=list(supp=0.005,conf = 0.15),appearance = list(default="lhs",rhs="whole milk"),
+               control = list(verbose=F))
+# Then order by confidence
+rules<-sort(rules, decreasing=TRUE,by="confidence")
+inspect(rules[1:5])
+
+```
+
+
+## Challenging the solution
+
+{herbs}	=>	{other vegetables} is the item set with the highest lift value hence meaning that it is 2.454874	more likely item that herbs are purchased when item other vegetables are purchased, while controlling for how popular herbs are.
+
+{domestic eggs}	=>	{whole milk} has the highest support value, meaning that it is the most popular itemset among the transactions with whole milk being the most popular item.
+
+{baking powder}	=>	{whole milk} is the transaction with the highest Confidence, meaning that it is 52% likely to purchase whole milk after purchasing baking powder.
+
+However our Lift, Confidence and Support values are very low hence we should collect more accurate inorder to to find more accurate relationships.
+
+##Follow up questions
+
+At this point, we can refine our question or collect new data, all in an iterative process to get at the truth.
+
+
+a). Did we have the right data?
+
+Yes
+ 
+because using the data we were able to conduct an analysis on our analytic question
+
+b). Do we need other data to answer our question?
+
+no.
+
+The data provided was sufficient
+
+c). Did we have the right question?
+
+yes
+
+We were able to make conclusion from our data
+
+
